@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="UTF-8">
+      <meta http-equiv="CACHE-CONTROL" content="NO-CACHE">
+      <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.2.3/milligram.min.css">
+      <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.8/dist/web3.min.js"></script>
+      <title>간단한 DiceGame</title>
+       <style>
+          body {margin-left:50px;}
+          #storedData {font-size:300%; margin-right:10px;}
+          #newValue {width: 200px; margin-right:10px; text-align:right;}
+        </style>
+   </head>
+   <body>
+      <h3>DiceGame</h3>
+      <ul>
+         <li>사용자 account address: <span id="accountAddr"></span></li>
+         <li>사용자의 주사위 예측 값: 
+            <input id="newNumber" type=:"text"><button onclick="setNumber()"> 예측</button>
+         </li>
+         <li>Ether betting: <input id="newBet" type=:"text"><button onclick="setBet()">Bet</button>
+         </li>
+         <li>[Result] 사용자의 주사위 예측값: <span id = "storedUserData">before  </span>, computer 주사위 값: <span id = "storedComData">before</span></li>
+      </ul>
+
+      <script>
+
+         var web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+         var contractAddress = '0xc9568106cd3497adf3ab3165fac81383ce37f4df';
+         var abi=[
+          {
+            "constant": false,
+            "inputs": [
+              {
+                "name": "_input",
+                "type": "uint256"
+              }
+            ],
+            "name": "InputDiceByuser",
+            "outputs": [],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+          },
+          {
+            "constant": false,
+            "inputs": [],
+            "name": "startApp",
+            "outputs": [],
+            "payable": true,
+            "stateMutability": "payable",
+            "type": "function"
+          },
+          {
+            "constant": true,
+            "inputs": [],
+            "name": "GetRandomDiceNumber",
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+          },
+          {
+            "constant": true,
+            "inputs": [],
+            "name": "GetUserDiceNumber",
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint256"
+              }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+          }
+        ];
+
+         var simpleStorageContract;
+         var simpleStorage;
+    
+         function getLink(addr){
+            return '<a target="_blank" href= https://testnet.etherscan.io/address/'+ addr + '>' + addr + '</a>';
+         }
+
+         function getValue(){
+            var user, com;            
+              /*simpleStorage.methods.GetUerDiceNumber().call()
+              .on("receipt", function(receipt){
+                user = receipt.toNumer();
+                document.getElementById('storedUserData').innerHTML = user;
+              });
+              
+              simpleStorage.methods.GetRandomDiceNumber().call()
+              .on("receipt", function(receipt){
+                com = receipt.toNumer();
+                document.getElementById('storedComData').innerHTML = com;
+              });
+            */
+            if(user != com)
+            {
+              alert("computer win!");
+            }
+            else
+            {
+              alert("user Win!");
+            }
+
+               /*simpleStorage.GetUserDiceNumber(function(e,r){
+               user = r.toNumber();
+               document.getElementById('storedUserData').innerHTML = user;
+            });
+
+            simpleStorage.GetRandomDiceNumber(function(e,r) {
+                com = r.toNumber();
+                document.getElementById('storedComData').innerHTML = com;
+            }) 
+            */
+         }
+
+         function setNumber() {
+            var newNumber = document.getElementById('newNumber').value;
+            var numberFloat = parseFloat(newNumber);
+
+            if(isNaN(numberFloat)) {
+              alert("please input number.");
+              return
+            }
+
+            simpleStorage.methods.InputDiceByuser(newNumber)
+            .send({from: "0x849F50Ee156443e3882087630DC40BA2505f3687"})
+            .on("receipt", function(receipt){
+              alert("input user number success!");
+            })
+            .on("error", function(error){
+              alert("input user number failed!");
+            });
+         }
+
+         function setBet() {
+            var newBet = document.getElementById('newBet').value;
+            var betFloat = parseFloat(newBet);
+
+            if(isNaN(betFloat)){
+              alert("input number");
+              return
+            }
+
+            simpleStorage.methods.startApp()
+            .send({from: "0x849F50Ee156443e3882087630DC40BA2505f3687", value: web3.utils.toWei(newBet)})
+
+
+            getValue();
+         }
+
+         function startApp(){
+            simpleStorage = new web3.eth.Contract(abi,contractAddress);
+            web3.eth.getAccounts(function(e,r){
+               document.getElementById('accountAddr').innerHTML = getLink(r[0]);
+            });
+         }
+
+         window.addEventListener('load', function(){
+              // Checking if Web3 has been injected by the browser (Mist/MetaMask)
+           if (typeof web3 !== 'undefined') {
+             // Use Mist/MetaMask's provider
+             window.web3 = new Web3(web3.currentProvider);
+           } else {
+             console.log('No web3? You should consider trying MetaMask!')
+             // fallback - use your fallback strategy (local node / hosted node + in-dapp id mgmt / fail)
+             window.web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+           }
+           // Now you can start your app & access web3 freely:
+           startApp();   
+         });
+      </script>
+   </body>
+</html>   
